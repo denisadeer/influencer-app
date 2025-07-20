@@ -1,0 +1,35 @@
+### Přihlášení - získání tokenu
+POST http://localhost:5000/login
+Content-Type: application/json
+
+{
+  "username": "anna",
+  "password": "tajneheslo"
+}
+### Získání dashboardu influencera
+GET http://localhost:5000/dashboard
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2ODZlOTgzOTJkMDJlZWYyN2NlZGY2OTkiLCJyb2xlIjoiaW5mbHVlbmNlciIsImlhdCI6MTc1MjA5NjUxNSwiZXhwIjoxNzUyMTAwMTE1fQ.fJ3unEslrYN-ut_HKTv3EuVITFXsqjjbmpEg1fD_HWc
+### Uložení dat do dashboardu influencera
+POST http://localhost:5000/dashboard
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2ODZlOTgzOTJkMDJlZWYyN2NlZGY2OTkiLCJyb2xlIjoiaW5mbHVlbmNlciIsImlhdCI6MTc1MjA5NjUxNSwiZXhwIjoxNzUyMTAwMTE1fQ.fJ3unEslrYN-ut_HKTv3EuVITFXsqjjbmpEg1fD_HWc
+
+{
+  "photoUrl": "https://example.com/moje-fotka.jpg",
+  "records": [
+    {
+      "title": "Spolupráce s firmou X",
+      "description": "Popis spolupráce a výsledky",
+      "date": "2025-07-09"
+    }
+  ]
+}
+POST http://localhost:5000/upload-photo
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="photo"; filename="DSC_0002.jpg"
+Content-Type: image/jpeg
+
+< C:\Users\denis\OneDrive\Plocha\foceni 2. rok\DSC_0002.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
