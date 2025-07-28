@@ -29,8 +29,10 @@ app.use('/api/stripe/webhook', require('./routes/stripeWebhook'));
 
 
 // Middleware
-app.use(cors());
-app.use(express.json({ limit: '10mb' }));
+app.use(cors({
+  origin: "http://localhost:5716",
+  credentials: true,
+}));app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -57,6 +59,7 @@ const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 } });
 const authenticateToken = require('./middleware/authenticateToken');
 
 // ROUTY
+app.use(express.static(path.join(__dirname, 'landing')));
 app.use('/', require('./landingRoutes'));
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use('/api/influencer', require('./routes/influencerRoutes'));
@@ -66,6 +69,8 @@ app.use('/api/influencers', require('./routes/influencerListRoute'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/admin', require('./routes/adminUserProfileRoutes'));
 app.use('/api/chat', require('./routes/chatRoutes'));
+app.use('/api/public', require('./routes/publicRoutes'));
+
 
 // Upload fotky
 app.post('/upload-photo', upload.single('photo'), (req, res) => {
@@ -86,6 +91,7 @@ app.post('/upload-photo', upload.single('photo'), (req, res) => {
 app.get('/protected', authenticateToken, (req, res) => {
   res.json({ message: `Ahoj ${req.user.userId}, máš přístup!`, role: req.user.role });
 });
+
 
 // 💬 SOCKET.IO AUTENTIZACE
 io.use((socket, next) => {

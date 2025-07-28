@@ -81,8 +81,19 @@ const Chat = ({ senderId, receiverId }) => {
 
         setChatLog(formatted);
         readyToReceive.current = true;
+
+        // 👇 PATCH: Označit zprávy jako přečtené
+        await fetch("http://localhost:5713/api/chat/mark-as-read", {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ senderId: receiverId }),
+        });
+        console.log("✅ Zprávy označeny jako přečtené");
       } catch (err) {
-        console.error("❌ Chyba při načítání zpráv:", err);
+        console.error("❌ Chyba při načítání zpráv nebo označení jako přečtené:", err);
       }
     };
 
@@ -105,32 +116,46 @@ const Chat = ({ senderId, receiverId }) => {
 
   return (
     <div style={{ padding: "1rem", maxWidth: "400px" }}>
-      <h2>💬 Chat</h2>
-      <div
-        style={{
-          border: "1px solid #ccc",
-          height: "200px",
-          overflowY: "scroll",
-          padding: "0.5rem",
-          marginBottom: "1rem",
-        }}
-      >
-        {chatLog.map((msg, index) => (
-          <div key={msg.timestamp || index}>
-            <strong>{msg.from}:</strong> {msg.text}
-          </div>
-        ))}
-      </div>
+  <h2>💬 Chat</h2>
 
-      <input
-        type="text"
-        placeholder="Napiš zprávu"
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        style={{ width: "100%", marginBottom: "0.5rem" }}
-      />
-      <button onClick={sendMessage}>Odeslat</button>
-    </div>
+  {/* ✅ Odkaz na profil podniku */}
+  <div style={{ marginBottom: "1rem" }}>
+    <a
+      href={`/profil-podniku/${receiverId}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{ textDecoration: "underline", color: "blue" }}
+    >
+      🔍 Zobrazit profil podniku
+    </a>
+  </div>
+
+  <div
+    style={{
+      border: "1px solid #ccc",
+      height: "200px",
+      overflowY: "scroll",
+      padding: "0.5rem",
+      marginBottom: "1rem",
+    }}
+  >
+    {chatLog.map((msg, index) => (
+      <div key={msg.timestamp || index}>
+        <strong>{msg.from}:</strong> {msg.text}
+      </div>
+    ))}
+  </div>
+
+  <input
+    type="text"
+    placeholder="Napiš zprávu"
+    value={message}
+    onChange={(e) => setMessage(e.target.value)}
+    style={{ width: "100%", marginBottom: "0.5rem" }}
+  />
+  <button onClick={sendMessage}>Odeslat</button>
+</div>
+
   );
 };
 

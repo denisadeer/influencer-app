@@ -4,26 +4,68 @@ const mongoose = require("mongoose");
 const Message = require("../models/Message");
 const authenticateToken = require("../middleware/authenticateToken");
 
-// GET: Získání všech zpráv daného uživatele
-router.get("/:userId", authenticateToken, async (req, res) => {
+// ✅ GET /conversations — načtení posledních zpráv a počtu nepřečtených
+router.get("/conversations", authenticateToken, async (req, res) => {
+  const userId = req.user.userId;
+  console.log("🔐 Uživatelský token (req.user):", req.user);
+
   try {
-    const userId = req.params.userId;
     const messages = await Message.find({
       $or: [{ senderId: userId }, { receiverId: userId }],
     })
       .populate("senderId", "username role")
       .populate("receiverId", "username role")
-      .sort({ timestamp: 1 });
+      .sort({ timestamp: -1 });
 
-    console.log("📨 Načteno zpráv:", messages.length);
-    res.json(messages);
+    const conversationsMap = new Map();
+
+    messages.forEach((msg) => {
+      // ✅ Přeskakujeme zprávy s chybějícím senderId nebo receiverId
+      if (!msg.senderId || !msg.receiverId) {
+        console.warn("⚠️ Zpráva s neúplnými daty:", msg);
+        return;
+      }
+
+      const otherUser = String(msg.senderId._id) === userId
+        ? msg.receiverId
+        : msg.senderId;
+
+      const key = otherUser._id.toString();
+
+      // ✅ Vytvoření záznamu v mapě, pokud ještě neexistuje
+      if (!conversationsMap.has(key)) {
+        conversationsMap.set(key, {
+          user: otherUser,
+          lastMessage: msg,
+          unreadCount: 0,
+        });
+      }
+
+      // ✅ Výpočet počtu nepřečtených zpráv
+      if (
+        msg.read === false &&
+        msg.receiverId &&
+        typeof msg.receiverId === "object" &&
+        msg.receiverId._id.toString() === userId
+      ) {
+        const otherUserId = msg.senderId._id.toString();
+        if (conversationsMap.has(otherUserId)) {
+          const conv = conversationsMap.get(otherUserId);
+          conv.unreadCount = (conv.unreadCount || 0) + 1;
+          console.log("🧮 Backend count++ pro:", otherUserId, "| zpráva:", msg.message);
+        }
+      }
+    });
+
+    const conversations = Array.from(conversationsMap.values());
+    res.json(conversations);
   } catch (err) {
-    console.error("❌ Chyba při získávání zpráv:", err);
-    res.status(500).json({ message: "Chyba při načítání zpráv" });
+    console.error("❌ Chyba při načítání konverzací:", err);
+    res.status(500).json({ message: "Chyba serveru při načítání konverzací." });
   }
 });
 
-// POST: Odeslání zprávy
+// 📨 Odeslání nové zprávy
 router.post("/", authenticateToken, async (req, res) => {
   const senderId = req.user.userId;
   const { receiverId: rawReceiverId, message, content } = req.body;
@@ -47,12 +89,6 @@ router.post("/", authenticateToken, async (req, res) => {
     return res.status(400).json({ message: "Neplatné ID příjemce." });
   }
 
-  console.log("📨 Příchozí zpráva:", {
-    senderId,
-    receiverId,
-    finalMessage,
-  });
-
   try {
     const newMessage = await Message.create({
       senderId,
@@ -69,6 +105,51 @@ router.post("/", authenticateToken, async (req, res) => {
     res.status(201).json(populatedMessage);
   } catch (err) {
     console.error("❌ Chyba při ukládání zprávy:", err);
+    res.status(500).json({ message: "Chyba serveru" });
+  }
+});
+
+// ✅ GET /:userId — načtení všech zpráv pro konkrétního uživatele
+router.get("/:userId", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const messages = await Message.find({
+      $or: [{ senderId: userId }, { receiverId: userId }],
+    })
+      .populate("senderId", "username role")
+      .populate("receiverId", "username role")
+      .sort({ timestamp: 1 });
+
+    console.log("📨 Načteno zpráv:", messages.length);
+    res.json(messages);
+  } catch (err) {
+    console.error("❌ Chyba při získávání zpráv:", err);
+    res.status(500).json({ message: "Chyba při načítání zpráv" });
+  }
+});
+
+// ✅ PATCH /mark-as-read — označení zpráv jako přečtené
+router.patch("/mark-as-read", authenticateToken, async (req, res) => {
+  const receiverId = req.user.userId;
+  const { senderId } = req.body;
+
+  if (!senderId) {
+    return res.status(400).json({ message: "Chybí senderId" });
+  }
+
+  try {
+    const result = await Message.updateMany(
+      { senderId, receiverId, read: false },
+      { $set: { read: true } }
+    );
+
+    console.log(`✅ Označeno jako přečtené: ${result.modifiedCount} zpráv`);
+    res.json({
+      message: "Zprávy označeny jako přečtené",
+      count: result.modifiedCount,
+    });
+  } catch (err) {
+    console.error("❌ Chyba při označování jako přečtené:", err);
     res.status(500).json({ message: "Chyba serveru" });
   }
 });

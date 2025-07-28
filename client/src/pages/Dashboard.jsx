@@ -31,11 +31,13 @@ function Dashboard() {
   return (
     <div style={{ padding: "2rem" }}>
       <div style={{ textAlign: "right", marginBottom: "1rem" }}>
-        <button onClick={handleLogout}>🔓 Odhlásit se</button>
+        <button onClick={handleLogout} className="btn btn-orange px-4 py-2">
+  🔓 Odhlásit se
+</button>
       </div>
 
-      <h2>Dashboard</h2>
-      <p>Jste přihlášen jako: <strong>{role}</strong></p>
+      {/* <h2>Dashboard</h2>
+<p>Jste přihlášen jako: <strong>{role}</strong></p> */}
 
       {role === "influencer" && (
         <>

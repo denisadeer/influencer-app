@@ -9,7 +9,8 @@ const AdminUserProfile = () => {
   const [profile, setProfile] = useState({});
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
-  const [contactLimit, setContactLimit] = useState("");
+  const [contactLimitInput, setContactLimitInput] = useState("");
+  const [remainingOverrideInput, setRemainingOverrideInput] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -25,7 +26,8 @@ const AdminUserProfile = () => {
         if (res.ok) {
           setUser(data.user);
           setProfile(data.profile || {});
-          setContactLimit(data.user.allowedContacts ?? "");
+          setContactLimitInput(data.user.allowedContacts ?? "");
+          setRemainingOverrideInput(data.user.remainingContactOverride ?? "");
         } else {
           setMessage(data.message || "Chyba při načítání profilu");
         }
@@ -75,8 +77,8 @@ const AdminUserProfile = () => {
 
   const handleContactUpdate = async () => {
     const token = localStorage.getItem("token");
+    const parsed = parseInt(contactLimitInput);
 
-    const parsed = parseInt(contactLimit);
     if (isNaN(parsed) || parsed < 0) {
       setMessage("❌ Zadej platné číslo pro počet kontaktů.");
       return;
@@ -104,8 +106,48 @@ const AdminUserProfile = () => {
     }
   };
 
+  const handleRemainingOverrideUpdate = async () => {
+    const token = localStorage.getItem("token");
+    const parsed = parseInt(remainingOverrideInput);
+
+    if (isNaN(parsed) || parsed < 0) {
+      setMessage("❌ Zadej platné číslo pro zbývající kontakty.");
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/admin/user/${userId}/remaining-override`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ newRemainingContactOverride: parsed }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setUser((prev) => ({
+          ...prev,
+          remainingContactOverride: parsed,
+        }));
+        setMessage("✅ Zbývající kontakty upraveny.");
+      } else {
+        setMessage(data.message || "❌ Chyba při úpravě zbývajících kontaktů.");
+      }
+    } catch (err) {
+      setMessage("❌ Chyba komunikace se serverem.");
+    }
+  };
+
   if (loading) return <p>Načítám...</p>;
   if (!user) return <p>{message || "Uživatel nenalezen."}</p>;
+
+  const allowed = user.allowedContacts ?? 0;
+  const used = user.contactsUsedThisMonth ?? 0;
+  const override = user.remainingContactOverride;
+  const remaining = override != null ? override : allowed - used;
 
   return (
     <div style={{ padding: "2rem" }}>
@@ -125,15 +167,15 @@ const AdminUserProfile = () => {
           style={{ marginLeft: "1rem" }}
         >
           <option value="">—</option>
+          <option value="free">free</option>
           <option value="basic">basic</option>
           <option value="pro">pro</option>
         </select>
       </label>
 
-      <p>
-        Kontakty povoleno:{" "}
-        <strong>{user.allowedContacts ?? "—"}</strong>
-      </p>
+      <p>Kontakty dle balíčku: <strong>{allowed}</strong></p>
+      <p>Kontakty použité: <strong>{used}</strong></p>
+      <p>Zbývající kontakty: <strong>{remaining}</strong></p>
       <p>
         Reset balíčku od:{" "}
         <strong>
@@ -144,15 +186,15 @@ const AdminUserProfile = () => {
       </p>
 
       <label style={{ margin: "1rem 0", display: "block" }}>
-        🛠️ Upravit počet kontaktů:
+        🛠️ Přepsat zbývající kontakty:
         <input
           type="number"
-          value={contactLimit}
-          onChange={(e) => setContactLimit(e.target.value)}
+          value={remainingOverrideInput}
+          onChange={(e) => setRemainingOverrideInput(e.target.value)}
           style={{ marginLeft: "1rem", width: "100px" }}
         />
-        <button onClick={handleContactUpdate} style={{ marginLeft: "1rem" }}>
-          💾 Uložit
+        <button onClick={handleRemainingOverrideUpdate} style={{ marginLeft: "1rem" }}>
+          💾 Uložit zbývající
         </button>
       </label>
 

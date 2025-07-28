@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="cs">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MicroMatch</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Rammetto+One&display=swap" rel="stylesheet" />
+
+    <!-- PicoCSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
+    />
+
+    <!-- Font Awesome pro ikony -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+
+    <style>
+      body {
+        background: #f5ece6;
+        color: #3d3d3d;
+      }
+
+      .hero {
+        background: linear-gradient(to right, #f9d3ba, #ffd8b5, #f9d3ba);
+        padding: 3rem 1rem;
+      }
+
+      .hero-content {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        max-width: 1100px;
+        margin: 0 auto;
+      }
+
+      @media (min-width: 768px) {
+        .hero-content {
+          flex-direction: row;
+        }
+      }
+
+      .hero-left h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .top-buttons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        padding: 1rem;
+        max-width: 1100px;
+        margin: 0 auto;
+      }
+
+      .btn-apricot {
+        background-color: #ffb088;
+        color: #000;
+      }
+
+      .btn-apricot:hover {
+        background-color: #e29a75;
+      }
+
+      .apricot-border {
+        border: 2px solid #f4a382;
+        border-radius: 0.5rem;
+        background-color: white;
+        padding: 1.5rem;
+      }
+
+      footer {
+        background: #f4a382;
+        color: white;
+        padding: 2rem 1rem;
+        margin-top: 4rem;
+      }
+
+      .footer-content {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        justify-content: space-between;
+        align-items: center;
+        max-width: 1100px;
+        margin: 0 auto;
+      }
+
+      .socials a {
+        color: white;
+        margin-right: 1rem;
+        font-size: 1.3rem;
+      }
+
+      .socials a:hover {
+        color: black;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>

@@ -1,5 +1,5 @@
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
-import Landing from "./pages/LandingPage";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import LandingPage from "./pages/LandingPage";
 import Register from "./pages/Register";
 import Terms from "./pages/Terms";
 import LoginPage from "./pages/LoginPage";
@@ -15,24 +15,19 @@ import PlatbaUspesna from "./pages/PlatbaUspesna";
 import PlatbaZrusena from "./pages/PlatbaZrusena";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
-import Unauthorized from "./pages/Unauthorized"; // 🆕 přidáno
-import ProtectedRoute from "./routes/ProtectedRoute"; // 🆕 přidáno
-import ChatPage from "./pages/ChatPage"; // nahoře s ostatními importy
-import VerifyEmail from "./pages/VerifyEmail"; // nebo správná cesta podle struktury
+import Unauthorized from "./pages/Unauthorized";
+import ProtectedRoute from "./routes/ProtectedRoute";
+import ChatPage from "./pages/ChatPage";
+import VerifyEmail from "./pages/VerifyEmail";
+import PublicBusinessProfile from "./components/PublicBusinessProfile";
+
+
 
 function App() {
   return (
     <Router>
-      <nav>
-        <Link to="/">Domů</Link> |{" "}
-        <Link to="/register">Registrace</Link> |{" "}
-        <Link to="/login">Přihlášení</Link> |{" "}
-        <Link to="/dashboard">Dashboard</Link> |{" "}
-        <Link to="/predplatne">Předplatné</Link> |{" "}
-      </nav>
-
       <Routes>
-        <Route path="/" element={<Landing />} />
+        <Route path="/" element={<LandingPage />} />
         <Route path="/register" element={<Register />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/login" element={<LoginPage />} />
@@ -44,8 +39,7 @@ function App() {
         <Route path="/email-verified" element={<EmailVerified />} />
         <Route path="/chat/:influencerId" element={<ChatPage />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
-
-        {/* 🔐 Chráněné routy jen pro adminy */}
+        <Route path="/profil-podniku/:id" element={<PublicBusinessProfile />} />
         <Route
           path="/admin"
           element={
@@ -62,13 +56,10 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route path="/platba-uspesna" element={<PlatbaUspesna />} />
         <Route path="/platba-zrusena" element={<PlatbaZrusena />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-
-        {/* 🛑 Stránka pro nepovolený přístup */}
         <Route path="/unauthorized" element={<Unauthorized />} />
       </Routes>
     </Router>

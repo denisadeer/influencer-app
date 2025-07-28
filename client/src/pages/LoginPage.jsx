@@ -9,7 +9,7 @@ function LoginPage() {
     e.preventDefault();
 
     try {
-      const response = await fetch("http://localhost:5713/login", {
+      const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -17,12 +17,12 @@ function LoginPage() {
         body: JSON.stringify({ username, password }),
       });
 
-      const data = await response.json();
+      const data = await res.json();
 
-      if (response.ok) {
+      if (res.ok) {
         localStorage.setItem("token", data.token);
         localStorage.setItem("role", data.data.role);
-        localStorage.setItem("userId", data.data.userId); // 🆕 přidáno
+        localStorage.setItem("userId", data.data.userId);
 
         setMessage("✅ Přihlášení proběhlo úspěšně!");
         window.location.href = "/dashboard";
@@ -36,43 +36,78 @@ function LoginPage() {
   };
 
   return (
-    <div style={{ padding: "2rem" }}>
-      <h2>Přihlášení</h2>
-      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", maxWidth: "300px" }}>
-        <label>
-          Uživatelské jméno:
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-          />
-        </label>
+    <div
+      style={{ backgroundColor: "#ffffff", minHeight: "100vh", paddingTop: "60px" }}
+    >
+      <div
+        className="container py-5"
+        style={{ display: "flex", justifyContent: "center" }}
+      >
+        <div
+          className="rounded p-4 shadow"
+          style={{
+            width: "100%",
+            maxWidth: "520px",
+            backgroundColor: "#FFAC76",
+          }}
+        >
+          {/* Logo + Nadpis */}
+          <div className="text-center mb-4">
+            <img
+              src="/images/logo.png"
+              alt="Logo"
+              style={{ width: "100px", height: "100px" }}
+            />
+            <h3 className="logo-font mt-2 mb-0">MicroMatch</h3>
+          </div>
 
-        <label>
-          Heslo:
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </label>
+          <p className="text-dark fw-bold mb-1">Přihlášení</p>
+          <p className="text-dark mb-3">
+            Zadejte své údaje pro přihlášení do aplikace.
+          </p>
 
-        <button type="submit" style={{ marginTop: "1rem" }}>
-          Přihlásit se
-        </button>
-      </form>
-<p style={{ marginTop: "1rem" }}>
-  <a href="/forgot-password" style={{ color: "blue", textDecoration: "underline" }}>
-    Zapomněli jste heslo?
-  </a>
-</p>
+          <form onSubmit={handleSubmit} className="d-flex flex-column gap-3">
+            <div>
+              <label className="form-label">Uživatelské jméno</label>
+              <input
+                type="text"
+                className="form-control"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+              />
+            </div>
 
-      {message && <p style={{ marginTop: "1rem" }}>{message}</p>}
+            <div>
+              <label className="form-label">Heslo</label>
+              <input
+                type="password"
+                className="form-control"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="text-end">
+              <a
+                href="/forgot-password"
+                style={{ color: "#000DD2", textDecoration: "underline" }}
+              >
+                Zapomněli jste heslo?
+              </a>
+            </div>
+
+            <button type="submit" className="btn-blue mt-2">
+              Přihlásit se
+            </button>
+          </form>
+
+          {message && <p className="mt-3">{message}</p>}
+        </div>
+      </div>
     </div>
   );
 }
 
 export default LoginPage;
-

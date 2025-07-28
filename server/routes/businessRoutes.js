@@ -39,8 +39,29 @@ router.get("/profile", (req, res, next) => {
 }, async (req, res) => {
 
   try {
-    const profile = await BusinessProfile.findOne({ userId: req.user.userId });
-    res.json({ profile });
+    const BusinessProfile = require("../models/BusinessProfile");
+const User = require("../models/User"); // 👈 přidej nahoře pokud tam není
+
+const profile = await BusinessProfile.findOne({ userId: req.user.userId });
+const user = await User.findById(req.user.userId);
+
+if (!user) return res.status(404).json({ message: "Uživatel nenalezen" });
+
+// Vracíme obě části: business profil + tarif
+res.json({
+  user: {
+    email: user.email,
+    subscriptionPlan: user.subscriptionPlan,
+    subscriptionCancelAt: user.subscriptionCancelAt,
+subscriptionStartDate: user.subscriptionStartDate,
+
+    // můžeš přidat i další pole pokud chceš
+  },
+  profile,
+});
+
+
+
   } catch (err) {
     console.error("❌ Chyba při načítání profilu:", err);
     res.status(500).json({ message: "Chyba serveru" });
@@ -93,6 +114,69 @@ router.post("/profile", (req, res, next) => {
     res.status(500).json({ message: "Chyba serveru při ukládání" });
   }
 });
+// ✅ Vrátit zbývající kontakty uživatele (včetně override)
+router.get("/remaining-contacts", (req, res, next) => {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader?.split(" ")[1];
+  if (!token) return res.status(401).json({ message: "Token chybí" });
+
+  require("jsonwebtoken").verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) return res.status(403).json({ message: "Neplatný token" });
+    req.user = user;
+    next();
+  });
+}, async (req, res) => {
+  try {
+    const User = require("../models/User");
+    const user = await User.findById(req.user.userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "Uživatel nenalezen" });
+    }
+
+    const used = user.contactsUsedThisMonth ?? 0;
+    const allowed = user.allowedContacts ?? 0;
+    const override = user.remainingContactOverride;
+
+    const remaining = override !== null && override !== undefined
+      ? override
+      : allowed - used;
+
+    res.json({ remainingContacts: remaining });
+  } catch (err) {
+    console.error("❌ Chyba při načítání zbývajících kontaktů:", err);
+    res.status(500).json({ message: "Chyba serveru při načítání kontaktů" });
+  }
+});
+
+// ✅ Veřejný profil podniku podle ID
+router.get("/public/business/:id", async (req, res) => {
+  try {
+    const BusinessProfile = require("../models/BusinessProfile");
+    const profile = await BusinessProfile.findOne({ userId: req.params.id });
+
+    if (!profile) return res.status(404).json({ message: "Profil nenalezen" });
+
+    // Vracíme jen veřejné informace
+    res.json({
+      profile: {
+        name: profile.name,
+        website: profile.website,
+        igProfile: profile.igProfile,
+        fbProfile: profile.fbProfile,
+        ttProfile: profile.ttProfile,
+        bio: profile.bio,
+        location: profile.location,
+        businessField: profile.businessField,
+        photoUrl: profile.photoUrl,
+      },
+    });
+  } catch (err) {
+    console.error("❌ Chyba při načítání veřejného profilu:", err);
+    res.status(500).json({ message: "Chyba serveru" });
+  }
+});
+
 
 
 module.exports = router;

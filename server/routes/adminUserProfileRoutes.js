@@ -18,6 +18,8 @@ router.get('/user-profile/:userId', authenticateToken, authorizeAdmin, async (re
       return res.status(404).json({ message: 'Uživatel nenalezen.' });
     }
 
+    const userObj = user.toObject();
+
     const ProfileModel = user.role === 'influencer' ? InfluencerProfile : BusinessProfile;
     let profile = await ProfileModel.findOne({ userId: user._id });
 
@@ -26,12 +28,27 @@ router.get('/user-profile/:userId', authenticateToken, authorizeAdmin, async (re
       await profile.save();
     }
 
-    res.json({ user, profile });
+    // 🧠 Výpočet zbývajících kontaktů
+    const used = user.contactsUsedThisMonth || 0;
+    const allowed = user.allowedContacts || 0;
+    const override = user.remainingContactOverride;
+
+    const remainingContacts = override !== null ? override : allowed - used;
+
+    res.json({
+      user: {
+        ...userObj,
+        contactsUsedThisMonth: used,
+        remainingContacts, // ✅ přidáno
+      },
+      profile,
+    });
   } catch (err) {
     console.error('❌ Chyba při načítání profilu:', err);
     res.status(500).json({ message: 'Chyba serveru při načítání profilu.' });
   }
 });
+
 
 // 💾 Uložit úpravy profilu + subscriptionPlan
 router.post('/user-profile/:userId', authenticateToken, authorizeAdmin, async (req, res) => {
@@ -44,13 +61,11 @@ router.post('/user-profile/:userId', authenticateToken, authorizeAdmin, async (r
       return res.status(404).json({ message: 'Uživatel nenalezen.' });
     }
 
-    // ✏️ Uložit změny do User
     if (Object.keys(userUpdates).length > 0) {
       Object.entries(userUpdates).forEach(([key, value]) => {
         user[key] = value;
       });
 
-      // ✅ Automaticky aktualizuj allowedContacts a startDate podle subscription plánu
       if (user.subscriptionPlan === "basic") {
         user.allowedContacts = 3;
         user.subscriptionStartDate = new Date();
@@ -62,7 +77,6 @@ router.post('/user-profile/:userId', authenticateToken, authorizeAdmin, async (r
       await user.save();
     }
 
-    // ✏️ Uložit profil
     const ProfileModel = user.role === 'influencer' ? InfluencerProfile : BusinessProfile;
     let profile = await ProfileModel.findOne({ userId: user._id });
 

@@ -23,8 +23,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// Detail influencera – pouze pro podniky, které jej kontaktovaly
-// Detail influencera – pouze pro podniky, které jej kontaktovaly
+// Detail influencera (pouze pokud byl kontaktován)
 router.get("/profile/:id", authenticateToken, async (req, res) => {
   try {
     if (req.user.role !== "business") {
@@ -38,32 +37,26 @@ router.get("/profile/:id", authenticateToken, async (req, res) => {
 
     const influencerId = req.params.id;
 
-    if (!business.contactedInfluencers || !business.contactedInfluencers.includes(influencerId)) {
+    if (!business.contactedInfluencers?.includes(influencerId)) {
       return res.status(403).json({ message: "Tento influencer nebyl vámi kontaktován." });
     }
 
-    // 🔧 Populuj userId
     const profile = await InfluencerProfile.findById(influencerId).populate("userId", "_id");
+    if (!profile) return res.status(404).json({ message: "Profil influencera nenalezen." });
 
-    if (!profile) {
-      return res.status(404).json({ message: "Profil influencera nenalezen." });
-    }
-
-    // ✨ Přidáme čistě userId bez celé reference
-    const resultProfile = {
-      ...profile.toObject(),
-      userId: profile.userId?._id?.toString() || null,
-    };
-
-    res.json({ profile: resultProfile });
+    res.json({
+      profile: {
+        ...profile.toObject(),
+        userId: profile.userId?._id?.toString() || null,
+      },
+    });
   } catch (err) {
     console.error("Chyba při načítání detailu influencera:", err);
     res.status(500).json({ message: "Chyba serveru." });
   }
 });
 
-
-// Uložit nebo aktualizovat influencer profil vč. fotky
+// Uložení / aktualizace profilu influencera včetně fotky
 router.post("/profile", authenticateToken, upload.single("photo"), async (req, res) => {
   try {
     const { userId } = req.user;
@@ -82,29 +75,21 @@ router.post("/profile", authenticateToken, upload.single("photo"), async (req, r
     };
 
     if (req.file) {
-      console.log("📸 Fotka byla nahrána:", req.file.filename);
       profileData.photoUrl = `/uploads/${req.file.filename}`;
-      } else {
-  console.log("⚠️ Žádná fotka nedorazila.");
     }
-console.log("🔍 Co ukládám do Mongo:", profileData);
 
     const existing = await InfluencerProfile.findOne({ userId });
 
     if (existing) {
-  // Pokud není nový soubor, zachováme původní photoUrl
-  if (!req.file && existing.photoUrl) {
-    profileData.photoUrl = existing.photoUrl;
-  }
+      if (!req.file && existing.photoUrl) {
+        profileData.photoUrl = existing.photoUrl;
+      }
 
-  const updated = await InfluencerProfile.findOneAndUpdate(
-    { userId },
-    profileData,
-    { new: true }
-  );
-  return res.json({ message: "Profil aktualizován", profile: updated });
-}
- else {
+      const updated = await InfluencerProfile.findOneAndUpdate({ userId }, profileData, {
+        new: true,
+      });
+      return res.json({ message: "Profil aktualizován", profile: updated });
+    } else {
       const newProfile = new InfluencerProfile({ userId, ...profileData });
       await newProfile.save();
       return res.json({ message: "Profil vytvořen", profile: newProfile });
@@ -114,39 +99,32 @@ console.log("🔍 Co ukládám do Mongo:", profileData);
     res.status(500).json({ error: "Chyba při ukládání profilu" });
   }
 });
-// ✅ Vrátit profil influencera (např. pro dashboard)
+
+// Získat vlastní profil influencera
 router.get("/profile", authenticateToken, async (req, res) => {
   try {
     const profile = await InfluencerProfile.findOne({ userId: req.user.userId });
-
-    if (!profile) {
-      return res.status(404).json({ message: "Profil nenalezen" });
-    }
-
+    if (!profile) return res.status(404).json({ message: "Profil nenalezen" });
     res.json({ profile });
-  } catch (error) {
-    console.error("❌ Chyba při načítání profilu:", error);
+  } catch (err) {
+    console.error("Chyba při načítání profilu:", err);
     res.status(500).json({ message: "Chyba serveru při načítání profilu" });
   }
 });
-// 🆕 Smazání profilové fotky influencera
+
+// Smazání profilové fotky
 router.delete("/profile/photo", authenticateToken, async (req, res) => {
   try {
-    const { userId } = req.user;
-
-    const profile = await InfluencerProfile.findOne({ userId });
-    if (!profile || !profile.photoUrl) {
+    const profile = await InfluencerProfile.findOne({ userId: req.user.userId });
+    if (!profile?.photoUrl) {
       return res.status(404).json({ message: "Fotka neexistuje." });
     }
 
     const filePath = path.join(__dirname, "..", profile.photoUrl);
-    
-    // 🗑️ Zkusit fyzicky smazat soubor
     fs.unlink(filePath, (err) => {
-      if (err) console.warn("⚠️ Nelze smazat soubor (možná už neexistuje):", err);
+      if (err) console.warn("⚠️ Nelze smazat soubor:", err);
     });
 
-    // 🧹 Vymazat photoUrl z profilu
     profile.photoUrl = undefined;
     await profile.save();
 
@@ -157,7 +135,7 @@ router.delete("/profile/photo", authenticateToken, async (req, res) => {
   }
 });
 
-// Získat anonymizovaný seznam influencerů
+// Anonymizovaný seznam influencerů s filtry
 router.get("/public-list", authenticateToken, async (req, res) => {
   try {
     const { ageGroup, location, gender, search, contactedOnly } = req.query;
@@ -171,19 +149,11 @@ router.get("/public-list", authenticateToken, async (req, res) => {
         "35-40": { $gte: 35, $lte: 40 },
         "40+": { $gte: 40 },
       };
-      if (ageRanges[ageGroup]) {
-        query.age = ageRanges[ageGroup];
-      }
+      if (ageRanges[ageGroup]) query.age = ageRanges[ageGroup];
     }
 
-    if (location) {
-      query.location = { $regex: location, $options: "i" };
-    }
-
-    if (gender) {
-      query.gender = gender;
-    }
-
+    if (location) query.location = { $regex: location, $options: "i" };
+    if (gender) query.gender = gender;
     if (search) {
       query.$or = [
         { bio: { $regex: search, $options: "i" } },
@@ -197,8 +167,8 @@ router.get("/public-list", authenticateToken, async (req, res) => {
 
     if (contactedOnly === "true" && req.user.role === "business") {
       const business = await User.findById(req.user.userId);
-      const contactedIds = business.contactedInfluencers.map(id => id.toString());
-      influencers = influencers.filter(inf => contactedIds.includes(inf._id.toString()));
+      const contactedIds = business.contactedInfluencers.map((id) => id.toString());
+      influencers = influencers.filter((inf) => contactedIds.includes(inf._id.toString()));
     }
 
     res.json({ influencers });
@@ -208,7 +178,7 @@ router.get("/public-list", authenticateToken, async (req, res) => {
   }
 });
 
-// Kontaktování influencera
+// Kontaktování influencera (opraveno!)
 router.post("/contact/:id", authenticateToken, checkSubscriptionStatus, async (req, res) => {
   try {
     if (req.user.role !== "business") {
@@ -216,37 +186,30 @@ router.post("/contact/:id", authenticateToken, checkSubscriptionStatus, async (r
     }
 
     const business = await User.findById(req.user.userId);
-    if (!business) {
-      return res.status(401).json({ message: "Podnik nenalezen." });
-    }
+    if (!business) return res.status(401).json({ message: "Podnik nenalezen." });
 
     resetContactsIfNeeded(business);
 
     const influencerId = req.params.id;
-    const alreadyContacted = business.contactedInfluencers?.some(
-      (id) => id.toString() === influencerId
-    );
 
-    if (alreadyContacted) {
+    if (business.contactedInfluencers?.includes(influencerId)) {
       const profile = await InfluencerProfile.findById(influencerId);
       return res.json({ profile });
     }
 
     const profile = await InfluencerProfile.findById(influencerId);
-    if (!profile) {
-      return res.status(404).json({ message: "Influencer nenalezen." });
+    if (!profile) return res.status(404).json({ message: "Influencer nenalezen." });
+
+    // 🧠 Vyhodnocení kontaktového limitu
+    let maxContacts;
+    if (typeof business.remainingContactOverride === "number") {
+      maxContacts = business.remainingContactOverride;
+    } else if (typeof business.allowedContacts === "number") {
+      maxContacts = business.allowedContacts;
+    } else {
+      const limits = { free: 2, basic: 3, pro: 8 };
+      maxContacts = limits[business.subscriptionPlan || "free"] || 0;
     }
-
-    const limits = {
-      free: 2,
-      basic: 3,
-      pro: 8,
-    };
-
-    const plan = business.subscriptionPlan || "free";
-    const maxContacts = typeof business.allowedContacts === "number"
-      ? business.allowedContacts
-      : limits[plan] || 0;
 
     if (business.contactsUsedThisMonth >= maxContacts) {
       return res.status(403).json({ message: "Byl vyčerpán měsíční limit kontaktů." });
@@ -278,18 +241,17 @@ router.get("/remaining-contacts", authenticateToken, async (req, res) => {
     if (!business) return res.status(404).json({ message: "Podnik nenalezen." });
 
     resetContactsIfNeeded(business);
-    await business.save(); // Uloží změny po případném resetu
-    
-    const limits = {
-      free: 2,
-      basic: 3,
-      pro: 8,
-    };
+    await business.save();
 
-    const plan = business.subscriptionPlan || "free";
-    const maxContacts = typeof business.allowedContacts === "number"
-      ? business.allowedContacts
-      : limits[plan] || 0;
+    let maxContacts;
+    if (typeof business.remainingContactOverride === "number") {
+      maxContacts = business.remainingContactOverride;
+    } else if (typeof business.allowedContacts === "number") {
+      maxContacts = business.allowedContacts;
+    } else {
+      const limits = { free: 2, basic: 3, pro: 8 };
+      maxContacts = limits[business.subscriptionPlan || "free"] || 0;
+    }
 
     const remaining = Math.max(0, maxContacts - (business.contactsUsedThisMonth || 0));
 

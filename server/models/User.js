@@ -78,7 +78,20 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+remainingContactOverride: {
+  type: Number,
+  default: null,
+},
 
+stripeCustomerId: {
+  type: String,
+  default: null,
+},
+
+stripeSubscriptionId: {
+  type: String,
+  default: null,
+},
   freePlanUsed: {
     type: Boolean,
     default: false,
