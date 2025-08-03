@@ -156,9 +156,17 @@ function BusinessDashboard() {
             </div>
             <h4 className="text-center">{form.name}</h4>
             <p className="text-center text-muted">{form.location}</p>
-            <p>
-              <strong>Obor podnikání:</strong> {form.businessField}
-            </p>
+            <label>
+  Obor podnikání:
+  <input
+    type="text"
+    name="businessField"
+    value={form.businessField}
+    onChange={handleChange}
+    className="form-control"
+  />
+</label>
+
             <label>Bio:</label>
             <textarea
               name="bio"
