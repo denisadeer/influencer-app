@@ -56,9 +56,10 @@ function BusinessDashboard() {
   useEffect(() => {
     const fetchContacts = async () => {
       try {
-        const res = await axios.get("http://localhost:5713/api/business/remaining-contacts", {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        });
+        const res = await axios.get(
+          "http://localhost:5713/api/business/remaining-contacts",
+          { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+        );
         setRemainingContacts(res.data.remainingContacts);
       } catch (err) {
         console.error("❌ Chyba při načítání kontaktů:", err);
@@ -125,195 +126,213 @@ function BusinessDashboard() {
   };
 
   return (
-    <div className="container py-4">
-      {/* Oranžová hlavička s logem */}
-      <section
-        style={{ backgroundColor: "#FFAC76" }}
-        className="text-center py-3 mb-4 rounded"
-      >
-        <img src="/images/logo.png" alt="Logo" style={{ height: "60px" }} />
-        <h2 className="logo-font mt-2 mb-0">MicroMatch</h2>
-      </section>
-
-      {/* Hlavní rozvržení */}
+    <div className="container-fluid bg-light min-vh-100">
       <div className="row">
         {/* Levý sloupec */}
-        <div className="col-md-6 mb-4">
-          <div className="card shadow p-4 mb-4" style={{ backgroundColor: "#FFF0E0" }}>
-            <div className="text-center mb-3">
-              <img
-                src={photoPreview || "/images/avatar-placeholder.png"}
-                alt="Profilová fotka"
-                className="img-fluid rounded-circle mb-2"
-                style={{ width: "200px", height: "200px", objectFit: "cover" }}
-              />
+        <div className="col-md-4">
+          <div className="set-custom-card p-3 h-100 set-custom-side-bar">
+            {/* Foto + upload */}
+            <div className="mb-3 set--input-all">
+              <div className="text-center">
+                <img
+                  src={photoPreview || "/images/avatar-placeholder.png"}
+                  alt="Profilová fotka"
+                  className="img-fluid rounded-circle"
+                  style={{ width: "180px", height: "180px", objectFit: "cover" }}
+                />
+              </div>
               <input
                 type="file"
-                onChange={(e) => setPhoto(e.target.files[0])}
                 accept="image/*"
-                className="form-control mt-2"
+                className="form-control mt-4"
+                onChange={(e) => setPhoto(e.target.files[0])}
               />
             </div>
-            <h4 className="text-center">{form.name}</h4>
-            <p className="text-center text-muted">{form.location}</p>
-            <label>
-  Obor podnikání:
-  <input
-    type="text"
-    name="businessField"
-    value={form.businessField}
-    onChange={handleChange}
-    className="form-control"
-  />
-</label>
 
-            <label>Bio:</label>
-            <textarea
-              name="bio"
-              value={form.bio}
-              onChange={handleChange}
-              rows={4}
-              className="form-control mb-3"
-            />
-            <h5>💬 Zprávy</h5>
-            {conversations.length === 0 ? (
-              <p className="text-center text-muted">📭 Žádné zprávy</p>
-            ) : (
-              <ul className="list-unstyled">
-                {conversations.map((conv) => (
-                  <li key={conv.user._id} className="mb-2 border-bottom pb-2">
-                    👤 <strong>{conv.user.username || conv.user._id}</strong>
-                    <br />
-                    {conv.unreadCount > 0 && (
-                      <span className="text-danger fw-bold">
-                        🔴 Nová zpráva
-                      </span>
-                    )}
-                    <br />
-                    <button
-                      onClick={() => navigate(`/chat/${conv.user._id}`)}
-                      className="btn btn-sm btn-outline-primary mt-1"
-                    >
-                      Otevřít
-                    </button>
-                  </li>
-                ))}
-              </ul>
+            {/* Název a lokalita */}
+            <div className="set--input-all fw-medium">
+              <label>Název firmy:</label>
+              <input
+                className="form-control"
+                name="name"
+                value={form.name}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="set--input-all">
+              <p>
+                <label className="fw-medium">Lokalita:</label>
+                <input
+                  className="form-control"
+                  name="location"
+                  value={form.location}
+                  onChange={handleChange}
+                />
+              </p>
+            </div>
+
+            {/* Zprávy */}
+            <div className="mt-4">
+              <h5>📨 Zprávy</h5>
+              {conversations.length === 0 ? (
+                <p className="text-center">Žádné zprávy</p>
+              ) : (
+                <ul className="list-unstyled set-style-ul-list">
+                  {conversations.map((conv) => (
+                    <li key={conv.user._id} className="mb-2">
+                      <strong>{conv.user.username || conv.user._id}</strong>
+                      <br />
+                      {conv.unreadCount > 0 && (
+                        <span className="fw-bold">
+                          🔴 Nová zpráva ({conv.unreadCount})
+                        </span>
+                      )}
+                      <br />
+                      <button
+                        className="set-btn-white-custom mt-1"
+                        onClick={() => navigate(`/chat/${conv.user._id}`)}
+                      >
+                        Otevřít chat
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            {/* Zbývající kontakty */}
+            {remainingContacts !== null && (
+              <div className="mt-3">
+                <strong>Zbývající kontakty:</strong> {remainingContacts}
+              </div>
             )}
           </div>
         </div>
 
         {/* Pravý sloupec */}
-        <div className="col-md-6 mb-4">
-          <div
-            className="card shadow p-4 h-100"
-            style={{ backgroundColor: "#fff0E0" }}
-          >
-            <form className="d-flex flex-column gap-3">
-              <label>
-                Web:
+        <div className="col-md-7 mx-auto">
+          {/* Hlavička se stejným stylem */}
+          <header className="text-center py-3 mb-4">
+            <div
+              style={{
+                backgroundColor: "#fff",
+                borderRadius: "22px",
+                padding: "12px 22px",
+                display: "inline-block",
+                border: "1px solid rgb(197, 197, 197)",
+                boxShadow:
+                  "rgba(100, 100, 111, 0.2) 0px 7px 29px 0px",
+              }}
+            >
+              <img
+                src="/images/logo.png"
+                alt="Logo"
+                style={{ width: "70px", height: "70px" }}
+              />
+              <h2
+                className="mt-2 text-dark"
+                style={{ fontFamily: "'Segoe UI', sans-serif" }}
+              >
+                MicroMatch
+              </h2>
+            </div>
+          </header>
+
+          {/* Formuláře ve stejném „chip“ stylu labelů */}
+          <div className="h-100">
+            <div className="row">
+              <div className="col-md-6 set--input-all">
+                <label>Web:</label>
                 <input
                   type="text"
                   name="website"
                   value={form.website}
                   onChange={handleChange}
-                  className="form-control"
+                  className="form-control mb-3"
                 />
-              </label>
-              <label>
-                Instagram:
+              </div>
+              <div className="col-md-6 set--input-all">
+                <label>Instagram:</label>
                 <input
                   type="text"
                   name="igProfile"
                   value={form.igProfile}
                   onChange={handleChange}
-                  className="form-control"
+                  className="form-control mb-3"
                 />
-              </label>
-              <label>
-                Facebook:
+              </div>
+              <div className="col-md-6 set--input-all">
+                <label>Facebook:</label>
                 <input
                   type="text"
                   name="fbProfile"
                   value={form.fbProfile}
                   onChange={handleChange}
-                  className="form-control"
+                  className="form-control mb-3"
                 />
-              </label>
-              <label>
-                TikTok:
+              </div>
+              <div className="col-md-6 set--input-all">
+                <label>TikTok:</label>
                 <input
                   type="text"
                   name="ttProfile"
                   value={form.ttProfile}
                   onChange={handleChange}
-                  className="form-control"
+                  className="form-control mb-3"
                 />
-              </label>
-              <label>
-                Lokalita:
-                <input
-                  type="text"
-                  name="location"
-                  value={form.location}
-                  onChange={handleChange}
-                  className="form-control"
-                />
-              </label>
-              <label>
-                Obor:
+              </div>
+              <div className="col-12 set--input-all">
+                <label>Obor podnikání:</label>
                 <input
                   type="text"
                   name="businessField"
                   value={form.businessField}
                   onChange={handleChange}
-                  className="form-control"
+                  className="form-control mb-3"
                 />
-              </label>
-
-              {remainingContacts !== null && (
-                <p className="mt-2">
-                  <strong>Zbývající kontakty:</strong> {remainingContacts}
-                </p>
-              )}
-
-              <div className="d-flex justify-content-between mt-3">
-                <button
-                  type="button"
-                  onClick={handleSave}
-                  className="btn btn-success"
-                >
-                  💾 Uložit profil
-                </button>
-                <button
-                  type="button"
-                  onClick={() => navigate("/login")}
-                  className="btn btn-outline-danger"
-                >
-                  Odhlásit se
-                </button>
               </div>
+              <div className="col-12 set--input-all">
+                <label>Bio:</label>
+                <textarea
+                  name="bio"
+                  value={form.bio}
+                  onChange={handleChange}
+                  rows="3"
+                  className="form-control mb-3"
+                />
+              </div>
+            </div>
 
-              <div className="d-flex justify-content-between mt-3">
-  <button
-    onClick={() => navigate("/influencers")}
-    className="btn w-100 me-2"
-    style={{ backgroundColor: "#FFAC76", color: "#000", fontWeight: "bold" }}
-  >
-    📋 Vybrat influencera
-  </button>
-  <button
-    onClick={() => navigate("/predplatne")}
-    className="btn w-100 ms-2"
-    style={{ backgroundColor: "#FFAC76", color: "#000", fontWeight: "bold" }}
-  >
-    📦 Můj balíček
-  </button>
-</div>
+            {/* Akční tlačítka ve stejném stylu */}
+            <div className="text-start mt-4">
+              <button onClick={handleSave} className="set-btn-custom me-3">
+                💾 Uložit profil
+              </button>
 
+              <button
+                onClick={() => navigate("/influencers")}
+                className="set-btn-custom me-3"
+              >
+                📋 Vybrat influencera
+              </button>
 
-              {message && <p className="text-center mt-3">{message}</p>}
-            </form>
+              <button
+                onClick={() => navigate("/predplatne")}
+                className="set-btn-custom me-3"
+              >
+                📦 Můj balíček
+              </button>
+
+              <button
+                onClick={() => navigate("/login")}
+                className="set-btn-white-custom"
+              >
+                Odhlásit se
+              </button>
+
+              {message && <p className="mt-3">{message}</p>}
+            </div>
           </div>
         </div>
       </div>

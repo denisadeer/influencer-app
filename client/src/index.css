@@ -1,8 +1,10 @@
 /* Základní reset a font */
+@import url('https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&display=swap');
 body {
   margin: 0;
   font-family: sans-serif;
   background-color: #f8f9fa;
+  font-family: "Jost", sans-serif !important;
 }
 
 /* Nadpisy ve fontu Poppins */
@@ -55,6 +57,54 @@ h1, h2, h3 {
   color: #000;
 }
 
-
-
-
+.set-btn-custom {
+  display: inline-block;
+  padding: 10px 22px;
+  border: 2px solid #fed9ca;
+  background-color: #ffefe0;
+  transition: .3s;
+  font-weight: 500;
+}
+.set-btn-custom:hover {
+  background-color: #7d7d7d;
+  border: 2px solid #c5c5c5;
+  transition: .3s;
+  color: #fff;
+}
+.set--input-all label {
+  background-color: #fff;
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 8px;
+  position: relative;
+  left: 12px;
+  top: 14px;
+  border-top: 3px solid #dee2e6;
+}
+.set--input-all input, .set--input-all select, .set--input-all textarea  {
+  box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+  padding: 12px 12px 8px 12px;
+}
+.set--input-all input:focus, .set--input-all select:focus, .set--input-all textarea:focus {
+  box-shadow: none;
+}
+.set-custom-side-bar {
+  background-color: #fed9ca;
+  /* box-shadow: rgba(0, 0, 0, 0.17) 0px -23px 25px 0px inset, rgba(0, 0, 0, 0.15) 0px -36px 30px 0px inset, rgba(0, 0, 0, 0.1) 0px -79px 40px 0px inset, rgba(0, 0, 0, 0.06) 0px 2px 1px, rgba(0, 0, 0, 0.09) 0px 4px 2px, rgba(0, 0, 0, 0.09) 0px 8px 4px, rgba(0, 0, 0, 0.09) 0px 16px 8px, rgba(0, 0, 0, 0.09) 0px 32px 16px; */
+  border-radius: 10px;
+}
+.set-btn-white-custom {
+  border: none;
+  display: inline-block;
+  padding: 2px 12px;
+  border: 2px solid #fed9ca;
+  background-color: #FFAC76;
+  transition: .3s;
+  font-weight: 500;
+  font-size: 14px;
+  min-width: 110px;
+}
+.set-style-ul-list {
+  list-style-type: circle;
+  padding-left: 28px;
+}

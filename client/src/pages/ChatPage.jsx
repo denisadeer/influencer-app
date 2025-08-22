@@ -8,6 +8,7 @@ const ChatPage = () => {
   const { influencerId } = useParams();
   const navigate = useNavigate();
   const [senderId, setSenderId] = useState(null);
+  const [role, setRole] = useState(null); // "business" nebo "influencer"
 
   // ✅ Načtení senderId z JWT
   useEffect(() => {
@@ -16,6 +17,7 @@ const ChatPage = () => {
       try {
         const decoded = jwtDecode(token);
         setSenderId(decoded.userId);
+        setRole(decoded.role); // <<< přidáno
         console.log("✅ senderId z JWT:", decoded.userId);
       } catch (err) {
         console.error("❌ Chyba při dekódování tokenu:", err);
@@ -71,7 +73,7 @@ const ChatPage = () => {
 
   return (
     <div style={{ padding: "2rem" }}>
-      <h2>💬 Chat s influencerem</h2>
+      <h2>💬 Chat</h2>
       <Chat senderId={senderId} receiverId={influencerId} />
     </div>
   );
