@@ -29,10 +29,17 @@ app.use('/api/stripe/webhook', require('./routes/stripeWebhook'));
 
 
 // Middleware
+
 app.use(cors({
-  origin: "http://localhost:5716",
-  credentials: true,
-}));app.use(express.json({ limit: '10mb' }));
+  origin: [
+    "http://localhost:5716",        // pro lokální vývoj
+    "https://micromatch.vercel.app" // tvoje veřejná Vercel doména
+  ],
+  methods: ["GET", "POST"],
+  credentials: true
+}));
+
+app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
